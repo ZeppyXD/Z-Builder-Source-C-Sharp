@@ -5,4 +5,4 @@ Free version of Z-Builder written in C#! I won't be doing any bugs fixes though.
 - Up to date decoder<br/>
 - Auto obfuscation (a bit broken)
 # How to use:
-Extract packages and compile the code.
+Compile the source code.
