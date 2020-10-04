@@ -53,7 +53,7 @@ namespace Z_Builder
                 string curGrowID = listBox1.SelectedItem.ToString();
                 metroTextBox1.Text = curGrowID;
                 string rawresult = alldata.FirstOrDefault(alldata => alldata.Contains(curGrowID));
-                string[] result = rawresult.Split(new[] { "[This-Is-A-Split(UM-Hi-Grando)]" }, StringSplitOptions.RemoveEmptyEntries);
+                string[] result = rawresult.Split(new[] { "[This-Is-A-Split]" }, StringSplitOptions.RemoveEmptyEntries);
                 metroTextBox2.Text = result[1];
                 string rawpasswords = result[2];
                 string[] passwords = rawpasswords.Split(new[] { "[#---Zephyr---#]" }, StringSplitOptions.RemoveEmptyEntries);
