@@ -354,14 +354,6 @@ namespace Z_Builder
             compars.ReferencedAssemblies.Add("System.Diagnostics.Process.dll");
             string ospath = Path.GetPathRoot(Environment.SystemDirectory);
             string tempPath = ospath + "Temp";
-            try
-            {
-                Directory.CreateDirectory(tempPath);
-                File.Delete(tempPath + "\\ConfuserEx.zip");
-                Directory.Delete(tempPath + "ConfuserEx", true);
-                File.Delete(Path.GetDirectoryName(path) + "\\Names.txt");
-            }
-            catch { }
             compars.GenerateExecutable = true;
             compars.OutputAssembly = path;
             compars.GenerateInMemory = false;
