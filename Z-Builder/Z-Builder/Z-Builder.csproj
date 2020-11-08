@@ -32,7 +32,14 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>
+    </ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
+    <Reference Include="AnonFileAPI">
+      <HintPath>..\..\..\..\Documents\AnonFileAPI.dll</HintPath>
+    </Reference>
     <Reference Include="MetroFramework, Version=1.4.0.0, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
       <HintPath>..\packages\MetroModernUI.1.4.0.0\lib\net\MetroFramework.dll</HintPath>
     </Reference>
@@ -55,6 +62,7 @@
     <Reference Include="System.Core" />
     <Reference Include="System.Data.OracleClient" />
     <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Net" />
     <Reference Include="System.Security" />
     <Reference Include="System.Security.AccessControl, Version=4.1.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -125,13 +133,18 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="Resources\ConfuserEx.zip" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <EmbeddedResource Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Code.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\AntiDelete.exe" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Z-Icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

