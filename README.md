@@ -4,4 +4,4 @@ Z-Builder written in C#!
 - Builder with some features like trace, recover, etc<br/>
 - Up to date decoder
 # How to use:
-Compile the source code. You need to obfuscate it yourself. You probably have to replace the license link
+Compile the source code. You need to obfuscate it yourself. You probably have to replace the license link and add the AntiDelete
